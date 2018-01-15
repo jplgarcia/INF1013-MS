@@ -1,0 +1,128 @@
+package chat;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Scanner;
+
+public class ServerRunnable implements Runnable{
+
+	private Socket client;
+	private String username;
+	private Scanner in;
+	private PrintStream out;
+	
+	ServerRunnable(Socket client) {
+		this.client = client;
+		
+		//Set input
+		in = null;
+		try {
+			in = new Scanner(client.getInputStream());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		//Set Output
+		out = null;
+		try {
+			out = new PrintStream(client.getOutputStream());
+		} catch (IOException e2) {
+			e2.printStackTrace();
+		}
+		ServerSingleton.getInstance().outputList.add(out);
+	}
+	
+	@Override
+	public void run() {	
+		//Start Receiving messages
+		while(in.hasNextLine()){
+			String msg = in.nextLine();
+			if(username != null){ //Caso ja tenha se registrado
+				ServerSingleton.getInstance().getUsersHash().get(username).renewLastPlayed();
+			}
+			String reaction = readAndAct(msg);
+			if (reaction.compareTo("User " + username + " disconected") == 0) {
+				break;
+			}
+			System.out.println(reaction);
+		}
+		in.close();
+		
+		ServerSingleton.getInstance().removeClient(client, username, out);
+		try {
+			client.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String readAndAct(String msg) {
+		String[] parts = msg.split(":: "); 	// E:: msg de erro || S:: msg de sucesso
+		String part1 = parts[0]; 			// E:: || S::
+		String part2 = parts[1]; 			// msg de erro ||msg de sucesso
+		
+		if (part1.compareTo("REGISTER") == 0) {
+			register(part2);
+			return "New player registered: " + part2;
+		} else if (part1.compareTo("PLAY") == 0) {
+			invite(username, part2);
+			return username + " invited player " + part2;
+		} else if (part1.compareTo("###") == 0){
+			System.out.println("gooot");
+			String opponent = ServerSingleton.getInstance().getUsersHash().get(username).getOpponent().getUsername();
+			if(opponent != null){
+				ServerSingleton.getInstance().endgame(username, opponent);
+			} else {
+				ServerSingleton.getInstance().removeClient(client, username, out);
+			}
+			return "User " + username + " disconected";
+		}
+		return part2;
+	}
+	
+	private void register(String user) {
+		if(ServerSingleton.getInstance().insertUsername(user, client, out)) {
+			username = user;
+			out.println("REGISTERED:: " + username);
+			broadcastPlayerList();
+			return;
+		}
+		out.println("ERROR:: username in use, try another");
+	}
+	
+	private void invite(String player1, String player2) {
+		if(ServerSingleton.getInstance().isInGame(player1) || ServerSingleton.getInstance().isInGame(player2)){
+			out.println("ERROR:: player already in a game");
+		} else {
+			ServerSingleton.getInstance().createGame(player1, player2);
+			broadcastPlayerList();
+			
+			Player opponent = ServerSingleton.getInstance().getUsersHash().get(player2);
+			
+			out.println("INVITE:: " + player2);
+			opponent.getOutStream().println("INVITE:: " + player1);
+		}
+	}
+	
+	public void broadcastPlayerList() {
+		String players = "PLAYERS:: @@@,, ";
+		HashMap<String, Player> users = ServerSingleton.getInstance().getUsersHash();
+		for (Entry<String, Player> entry : users.entrySet()) {
+		    String key = entry.getKey();
+		    Player value = entry.getValue();
+		    if (value.getOpponent() == null) {
+		    	players += (key + ",, ");
+		    }
+		}
+		PrintStream clientOut = null;
+		for (Player value : users.values()) {
+			clientOut = value.getOutStream();
+			clientOut.println(players);
+		}
+	}
+}

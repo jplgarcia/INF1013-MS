@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 5 packages to &apos;Xadrez/src&apos;&#x0A;- Original project: &apos;game-client&apos;&#x0A;- Destination element: &apos;Xadrez/src&apos;&#x0A;- Original elements:&#x0A;     game-client/src/alert&#x0A;     game-client/src/client&#x0A;     game-client/src/utils&#x0A;     game-client/src/controllers&#x0A;     game-client/src/views" description="Copy packages" destination="=Xadrez/src" element1="/src&lt;alert" element2="/src&lt;client" element3="/src&lt;utils" element4="/src&lt;controllers" element5="/src&lt;views" flags="589830" fragments="5" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyPackages" stamp="1498784976146" version="1.0"/>
+</session>

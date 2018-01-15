@@ -1,0 +1,62 @@
+package clientviews;
+
+import java.awt.Component;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
+
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+
+import clientlogic.ClientSocketSingleton;
+import utils.ScreenDimensions;
+
+@SuppressWarnings("serial")
+public class SelectOpponentView extends JFrame implements Observer {
+	private final int FRAME_WIDTH = 500; 
+	private final int FRAME_HEIGHT = 200;
+	
+	protected SelectOpponentPanel panel = new SelectOpponentPanel();
+	protected JButton startButton = new JButton("Iniciar");
+	
+	public SelectOpponentView() {
+		getContentPane().add(panel);
+		
+		getContentPane().add(startButton);
+		
+		startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+		
+		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		
+		ScreenDimensions screen = ScreenDimensions.getScreenDimensions();
+		int initialX = (int) (screen.screenCenterX - FRAME_WIDTH/2);
+		int initialY = (int) (screen.screenCenterY - FRAME_HEIGHT/2);
+		setBounds(initialX, initialY, FRAME_WIDTH, FRAME_HEIGHT);
+		setResizable(false);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                ClientSocketSingleton.getInstance().getMessager().sendMessage("###:: me");
+                e.getWindow().dispose();
+            }
+        });
+	}
+	
+	protected String getSelectedValue() {
+		return (String) this.panel.getList().getSelectedValue();
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		this.panel.resetList((ArrayList<String>)arg);
+	}
+	
+	
+}

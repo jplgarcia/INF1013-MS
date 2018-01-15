@@ -1,0 +1,16 @@
+/board/
+/exceptions/
+/gameButtons/
+/main.class
+/peça/
+/peca/
+/alert/
+/client/
+/controllers/
+/utils/
+/views/
+/clientcontrollers/
+/clientlogic/
+/clientviews/
+/clientalert/
+/clientutils/

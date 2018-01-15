@@ -1,0 +1,96 @@
+package chat;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.sql.Time;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ServerSingleton {
+
+	private static ServerSingleton instance = null;
+	public ServerSocket server;
+	public ArrayList<PrintStream> outputList = new ArrayList<PrintStream>();
+	private Map<String, Player> usersHash = new HashMap<String, Player>();
+	private ServerClientManager clientManager = new ServerClientManager();
+	
+	private ServerSingleton() {
+		try {
+			server = new ServerSocket(5500);
+		} catch (IOException e) {
+			System.out.println("Server: Did not connect");
+			e.printStackTrace();
+		}
+		System.out.println("Server: open port 5500");
+	}
+	
+	public static synchronized ServerSingleton getInstance(){
+		if (instance == null){
+			instance = new ServerSingleton();
+		}
+		return instance;
+	}
+	
+	public void startGettingClients() {
+		Thread clientManagerThread = new Thread(clientManager);
+		clientManagerThread.start();
+	}
+	
+	public void startDroppingClients() {
+		Thread timerThread = new Thread(new TimerRunnable());
+		timerThread.start();
+	}
+	
+	public boolean usernameIsAvaible(String username) {
+		if (usersHash.get(username) != null){
+			return false;
+		}
+		return true;
+	}
+	public boolean insertUsername(String username, Socket client, PrintStream outStream) {
+		if(usernameIsAvaible(username)){
+			usersHash.put(username, new Player(username, client, outStream));
+			return true;
+		}
+		return false;
+	}
+	
+	public HashMap<String, Player> getUsersHash() {
+		return (HashMap<String, Player>) usersHash;
+	}
+	
+	public boolean isInGame(String user) {
+		if (usersHash.get(user).getOpponent() != null){
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public void createGame(String player1, String player2) {
+		usersHash.get(player1).setOpponent(usersHash.get(player2));
+		usersHash.get(player2).setOpponent(usersHash.get(player1));
+	}
+	
+	
+	public void removeClient(Socket client, String user, PrintStream out) {
+		out.println("###:: you");
+		usersHash.remove(user);
+	}
+	
+	public void endgame(String player1, String player2) {
+		Player p1 = usersHash.get(player1);
+		Player p2 = usersHash.get(player2);
+		
+		p1.getOutStream().println("###:: you");
+		p2.getOutStream().println("###:: opponent");
+		
+		removeClient(p1.getClient(), p1.getUsername(), p1.getOutStream());
+		removeClient(p2.getClient(), p2.getUsername(), p2.getOutStream());	
+	}
+
+}

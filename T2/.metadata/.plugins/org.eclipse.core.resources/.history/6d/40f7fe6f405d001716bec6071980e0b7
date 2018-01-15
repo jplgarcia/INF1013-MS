@@ -1,0 +1,28 @@
+package controllers;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import alert.AlertView;
+import client.ClientSocketSingleton;
+import views.InsertUsernameView;
+
+@SuppressWarnings("serial")
+public class InsertUsernameController extends InsertUsernameView {
+
+	
+	public InsertUsernameController(){
+		
+		this.startButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				register();
+			}
+		});
+	}
+	
+	private void register() {
+		String user = this.getInsertUsernamePanel().getPlayerField().getText();
+		ClientSocketSingleton.getInstance().getMessager().sendMessage("REGISTER:: " + user);
+	}
+}
